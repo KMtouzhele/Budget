@@ -1,0 +1,65 @@
+using Microsoft.EntityFrameworkCore;
+using Budget.DB;
+using Budget.DB.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Budget.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<BudgetDBContext>(
+    options => options.UseNpgsql(builder.Configuration.GetConnectionString("DevDBConnection"))
+);
+
+builder.Services.AddIdentity<AspNetUser, IdentityRole>()
+    .AddEntityFrameworkStores<BudgetDBContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Issuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+});
+
+builder.Services.AddScoped<AuthService>();
+
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5108); // HTTP port
+    options.ListenAnyIP(7240, listenOptions => listenOptions.UseHttps()); // HTTPS port
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization(); 
+app.MapControllers();
+
+app.Run();

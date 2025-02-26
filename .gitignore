@@ -1,0 +1,130 @@
+# =============== #
+# General ignores #
+# =============== #
+
+# User-specific files
+.vscode/
+.idea/
+*.code-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs & Debugging
+logs/
+*.log
+*.tlog
+*.vsp
+*.vspx
+*.vssscc
+
+# =============== #
+# .NET / C# Ignores #
+# =============== #
+
+# Build artifacts
+bin/
+obj/
+out/
+*.exe
+*.dll
+*.pdb
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+*.nupkg
+*.snupkg
+
+# .NET user-specific files
+*.suo
+*.user
+*.vs
+*.vssscc
+*.cache
+*.csproj.user
+*.dbmdl
+
+# NuGet packages
+*.nupkg
+**/packages/
+!**/packages/build/
+
+# Rider / JetBrains
+*.sln.iml
+.idea/
+*.dotSettings.user
+
+# Visual Studio Code workspace settings
+.vscode/
+
+# =============== #
+# Next.js Ignores #
+# =============== #
+
+# Next.js build output
+.next/
+.vercel/
+out/
+
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment variables & Secrets
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+
+# Temporary files
+*.tmp
+*.swp
+*.swn
+*.swo
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =============== #
+# PostgreSQL Ignores #
+# =============== #
+
+# PostgreSQL data files (if running locally)
+pgdata/
+*.sql~
+
+# Database dumps
+*.dump
+*.backup
+*.bak
+
+# =============== #
+# Docker Ignores (if using Docker) #
+# =============== #
+
+# Ignore Docker build files
+docker-compose.override.yml
+docker-compose.debug.yml
+.dockerignore
+
+# Ignore container-related files
+**/.docker/
+**/.container/
