@@ -22,7 +22,27 @@ export function RegisterForm() {
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        console.log("Register");
+        setError("");
+        setLoading(true);
+
+        try {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/account/register`, {
+                username,
+                password,
+                confirmPassword
+            });
+            if (response.status === 200) {
+                console.log("Registration successful", response.data);
+                router.push('/auth/login');
+            } else {
+                setError("Registration failed");
+            }
+        } catch (error) {
+            setError("Registration failed. Please check your credentials.");
+            console.error("Registration error", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleLogin = () => {
@@ -39,7 +59,7 @@ export function RegisterForm() {
             }}
         >
             <Typography variant="h5" component="h1" fontWeight="bold" mb={3}>
-                Welcome to Budget Tracker
+                Create an account
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -78,7 +98,7 @@ export function RegisterForm() {
                     type="password"
                     id="confirmPassword"
                     autoComplete="current-password"
-                    value={password}
+                    value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={loading}
                 />

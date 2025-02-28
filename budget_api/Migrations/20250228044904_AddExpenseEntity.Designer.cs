@@ -3,6 +3,7 @@ using System;
 using Budget.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace budget_api.Migrations
 {
     [DbContext(typeof(BudgetDBContext))]
-    partial class BudgetDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250228044904_AddExpenseEntity")]
+    partial class AddExpenseEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -97,39 +100,39 @@ namespace budget_api.Migrations
                     b.Property<decimal>("Amount")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)")
-                        .HasColumnName("Amount");
+                        .HasColumnName("amount");
 
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
-                        .HasColumnName("Category");
+                        .HasColumnName("category");
 
                     b.Property<DateTime>("CreateTime")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("CreateTime");
+                        .HasColumnName("create_time");
 
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)")
-                        .HasColumnName("Currency");
+                        .HasColumnName("currency");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("Description");
+                        .HasColumnName("description");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
-                        .HasColumnName("Name");
+                        .HasColumnName("name");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("UserId");
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
@@ -272,11 +275,13 @@ namespace budget_api.Migrations
 
             modelBuilder.Entity("Budget.DB.Models.Expense", b =>
                 {
-                    b.HasOne("Budget.DB.Models.AspNetUser", null)
+                    b.HasOne("Budget.DB.Models.AspNetUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

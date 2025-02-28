@@ -1,7 +1,12 @@
+"use client";
+import {
+    Box,
+} from '@mui/material';
+
 export default function OverviewPage() {
     return (
-        <div>
-            Overview Page
-        </div>
+        <Box>
+            This is the overview page
+        </Box>
     );
-};
+}

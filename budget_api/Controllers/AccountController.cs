@@ -35,6 +35,11 @@ namespace Budget.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
+            if (model.Password != model.ConfirmPassword)
+            {
+                _logger.LogError("Passwords do not match.");
+                return BadRequest(new { message = "Passwords do not match" });
+            }
             var user = new AspNetUser { UserName = model.UserName };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)

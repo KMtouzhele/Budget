@@ -4,8 +4,8 @@ import { Box } from '@mui/material';
 
 export default function LoginPage() {
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

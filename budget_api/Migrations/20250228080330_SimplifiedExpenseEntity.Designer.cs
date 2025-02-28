@@ -3,6 +3,7 @@ using System;
 using Budget.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace budget_api.Migrations
 {
     [DbContext(typeof(BudgetDBContext))]
-    partial class BudgetDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250228080330_SimplifiedExpenseEntity")]
+    partial class SimplifiedExpenseEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
