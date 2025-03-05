@@ -31,7 +31,7 @@ export function LoginForm() {
             });
             if (response.status === 200) {
                 console.log("Login successful", response.data);
-                localStorage.setItem('token', response.data.token);
+                localStorage.setItem('token', response.data.message.token);
                 router.push('/budget/overview');
             } else {
                 setError("Login failed");
