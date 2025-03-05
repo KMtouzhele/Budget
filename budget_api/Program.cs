@@ -16,9 +16,20 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole>()
     .AddEntityFrameworkStores<BudgetDBContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+// builder.Services.AddTransient<AuthService>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
 .AddJwtBearer(options =>
 {
+    string? key = builder.Configuration["Jwt:Key"];
+    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!));
+    securityKey.KeyId = "budget-app";
+
+    Console.WriteLine($"Key: {key}");
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -27,17 +38,46 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+        IssuerSigningKey = securityKey
     };
     options.Events = new JwtBearerEvents
     {
+        OnMessageReceived = context =>
+    {
+        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        Console.WriteLine($"Auth header: {authHeader}");
+
+        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+        {
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+            context.Token = token;
+            Console.WriteLine($"Token extracted: {token}");
+        }
+        else
+        {
+            Console.WriteLine("No valid authorization header found");
+        }
+
+        return Task.CompletedTask;
+    },
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine("Token is invalid: " + context.Exception.Message);
+            Console.WriteLine($"Failed to validate JWT Token: {context.Exception}");
+            if (context.Exception is SecurityTokenInvalidIssuerException)
+                Console.WriteLine("❌ Wrong Issuer! ");
+            if (context.Exception is SecurityTokenInvalidAudienceException)
+                Console.WriteLine("❌ Wrong Audience! ");
+            if (context.Exception is SecurityTokenExpiredException)
+                Console.WriteLine("❌ Token expired! ");
+            if (context.Exception is SecurityTokenInvalidSignatureException)
+                Console.WriteLine("❌ Wrong Signature! ");
             return Task.CompletedTask;
         },
     };
-});
+}
+);
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<AuthService>();
 
@@ -73,10 +113,11 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
+app.MapGet("/test", () => "OK!")
+    .RequireAuthorization();
 app.Run();

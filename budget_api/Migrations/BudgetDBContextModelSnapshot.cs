@@ -101,8 +101,7 @@ namespace budget_api.Migrations
 
                     b.Property<string>("Category")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
+                        .HasColumnType("text")
                         .HasColumnName("Category");
 
                     b.Property<DateTime>("CreateTime")

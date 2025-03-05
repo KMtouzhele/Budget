@@ -38,18 +38,38 @@ namespace Budget.Controllers
             if (model.Password != model.ConfirmPassword)
             {
                 _logger.LogError("Passwords do not match.");
-                return BadRequest(new { message = "Passwords do not match" });
+                return BadRequest(
+                new
+                {
+                    status = 400,
+                    title = "Passwords do not match",
+                    message = "Passwords do not match"
+                });
             }
             var user = new AspNetUser { UserName = model.UserName };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
                 _logger.LogInformation("User registered successfully.");
-                return Ok(new { message = "User registered successfully" });
+                return Ok(
+                new
+                {
+                    status = 200,
+                    title = "User registered successfully",
+                    message = "User registered successfully"
+                });
             }
 
             _logger.LogError("User registration failed.");
-            return BadRequest(new { message = "User registration failed", errors = result.Errors });
+            return BadRequest(
+            new
+            {
+                status = 400,
+                title = "User registration failed",
+                message = "User registration failed",
+                errors = result.Errors
+            }
+            );
         }
 
         [HttpPost("login")]
@@ -61,11 +81,25 @@ namespace Budget.Controllers
                 var user = await _userManager.FindByNameAsync(model.UserName);
                 var token = _authService.GenerateJwtToken(user!);
                 _logger.LogInformation("User logged in successfully.");
-                return Ok(new { token });
+                return Ok(
+                new
+                {
+                    status = 200,
+                    title = "User logged in successfully",
+                    message = new
+                    {
+                        token = token,
+                    }
+                }
+                );
             }
-
-            _logger.LogWarning("Invalid login attempt.");
-            return Unauthorized(new { message = "Invalid login attempt" });
+            return Unauthorized(
+            new
+            {
+                status = 401,
+                title = "Invalid login attempt",
+                message = "Invalid login attempt"
+            });
         }
     }
 }

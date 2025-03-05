@@ -4,6 +4,7 @@ using Budget.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace Budget.Controllers
@@ -30,7 +31,14 @@ namespace Budget.Controllers
 
             if (userId == null)
             {
-                return Unauthorized();
+                return Unauthorized(
+                    new
+                    {
+                        status = 401,
+                        title = "User not authenticated",
+                        message = "Please login to access"
+                    }
+                );
             }
             _logger.LogInformation("UserID found: {UserId}", userId);
 
@@ -44,12 +52,24 @@ namespace Budget.Controllers
                 return NotFound(
                     new
                     {
+                        status = 404,
+                        title = "No expenses found for user",
                         message = "No expenses found for user"
                     }
                 );
             }
-
-            return Ok(expenses);
+            return Ok(
+                new
+                {
+                    status = 200,
+                    title = "Expenses found",
+                    message =
+                    new
+                    {
+                        expenses = expenses
+                    }
+                }
+            );
         }
 
         [HttpPost]
@@ -58,7 +78,26 @@ namespace Budget.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
             {
-                return Unauthorized();
+                return Unauthorized(
+                    new
+                    {
+                        status = 401,
+                        title = "User not authenticated",
+                        message = "User not authenticated"
+                    }
+                );
+            }
+            if (!Enum.TryParse<ExpenseCategory>(model.Category, true, out var expenseCategory) ||
+            !Enum.IsDefined(expenseCategory))
+            {
+                return BadRequest(
+                new
+                {
+                    status = 400,
+                    title = "Invalid expense category",
+                    message = "Needed to be one of: Food, Rent, Bills, Transport, Other"
+                }
+                );
             }
 
             Expense expense = new()
@@ -78,8 +117,12 @@ namespace Budget.Controllers
             return Ok(
                 new
                 {
-                    message = "Expense created successfully",
-                    expense = expense
+                    status = 200,
+                    title = "Expense created successfully",
+                    message = new
+                    {
+                        expense = expense
+                    },
                 }
             );
         }

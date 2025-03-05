@@ -16,24 +16,34 @@ namespace Budget.Services
 
         public string GenerateJwtToken(AspNetUser user)
         {
-            var claims = new[] {
-            new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim (JwtRegisteredClaimNames.Sub, user.UserName!),
-            new Claim (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Aud, _configuration["Jwt:Audience"]!)
-        };
+            Console.WriteLine("Generating JWT token");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                notBefore: DateTime.UtcNow,
-                expires: DateTime.UtcNow.AddMinutes(60),
-                signingCredentials: creds
-                );
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var handler = new JwtSecurityTokenHandler();
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = GenerateClaims(user),
+                NotBefore = DateTime.UtcNow,
+                Expires = DateTime.UtcNow.AddMinutes(60),
+                SigningCredentials = creds,
+                Issuer = _configuration["Jwt:Issuer"] ?? "budget-api",
+                Audience = _configuration["Jwt:Audience"] ?? "budget-frontend",
+                AdditionalHeaderClaims = new Dictionary<string, object>
+                {
+                    { "kid", "budget-app" }
+                }
+            };
+            var token = handler.CreateToken(tokenDescriptor);
+            return handler.WriteToken(token);
+        }
+
+        private static ClaimsIdentity GenerateClaims(AspNetUser user)
+        {
+            var ci = new ClaimsIdentity();
+            ci.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id));
+            ci.AddClaim(new Claim(ClaimTypes.Name, user.UserName!));
+            return ci;
         }
     }
 }
