@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
     Table,
     TableBody,
@@ -26,8 +25,9 @@ import {
     Alert,
     IconButton,
 } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
 import { ExpenseModel } from '@/models/ExpenseModel';
-import { getExpenses } from '@/api/expense';
+import { getExpenses, deleteExpense, updateExpense, createExpense } from '@/api/expense';
 import { Delete, Edit } from '@mui/icons-material';
 
 
@@ -39,9 +39,12 @@ export function ExpenseTable() {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+    const [editMode, setEditMode] = useState<boolean>(false);
+    const [openConfirm, setOpenConfirm] = useState<boolean>(false);
+    const [selectedId, setSelectedId] = useState<number>(-1);
 
     const defaultExpense: ExpenseModel = {
-        id: 0,
+        id: -1,
         name: '',
         category: 'Transport',
         amount: 0,
@@ -75,13 +78,48 @@ export function ExpenseTable() {
 
     const handleNewOnClick = () => {
         console.log('New Expense');
+        setEditMode(false);
         setNewExpense(defaultExpense);
         setOpenDialog(true);
     };
 
+    const handleEditOnClick = (expenseModel: ExpenseModel) => {
+        setEditMode(true);
+        setSelectedId(expenseModel.id);
+        setOpenDialog(true);
+        setNewExpense(expenseModel);
+    };
+
+    const handleDeleteOnClick = (id: number) => {
+        setSelectedId(id);
+        setOpenConfirm(true);
+    };
+
+    const handleDelete = async (id: number) => {
+        try {
+            const deleted = await deleteExpense(id);
+            if (deleted) {
+                showSnackbar('Expense deleted successfully', 'success');
+                fetchExpenses();
+                setOpenConfirm(false);
+                setSelectedId(-1);
+            } else {
+                setOpenConfirm(false);
+                showSnackbar('Error deleting expense', 'error');
+                setSelectedId(-1);
+            }
+        } catch (error) {
+            console.error('Error deleting expense:', error);
+            showSnackbar('Error deleting expense', 'error');
+            setOpenConfirm(false);
+            setSelectedId(-1);
+        }
+    };
+
     const handleCloseDialog = () => {
         setOpenDialog(false);
-        setNewExpense({} as ExpenseModel);
+        setEditMode(false);
+        setNewExpense(defaultExpense);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
@@ -92,24 +130,48 @@ export function ExpenseTable() {
         }));
     };
 
-    const handleSubmitNewExpense = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/expense`,
-                newExpense,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+    const formValid = () => {
+        return newExpense.name.length > 0
+            && newExpense.amount > 0
+            && newExpense.description.length > 0;
+    };
 
-            if (response.data && response.data.message && response.data.message.expense) {
+    const handleSelectChange = (e: SelectChangeEvent) => {
+        const { target: { name, value } } = e;
+        setNewExpense(prev => ({ ...prev, [name as string]: value }));
+    };
+
+    const handleSubmitExpense = async () => {
+        if (!formValid()) {
+            showSnackbar('Please fill all required fields', 'error');
+            return;
+        }
+        try {
+            if (editMode && selectedId !== -1) {
+                const updated = await updateExpense(selectedId, newExpense);
+                console.log('Updated:', updated.id);
+                if (updated.id === -1) {
+                    showSnackbar('Error updating expense', 'error');
+                    setOpenDialog(false);
+                    setEditMode(false);
+                }
+                showSnackbar('Expense updated successfully', 'success');
                 fetchExpenses();
+                setOpenDialog(false);
+                setEditMode(false);
+                setNewExpense(defaultExpense);
+
+            } else {
+                const created = await createExpense(newExpense);
+                console.log('Created:', created);
+                if (created.id === -1) {
+                    showSnackbar('Error creating expense', 'error');
+                }
                 showSnackbar('Expense created successfully', 'success');
+                fetchExpenses();
+                setOpenDialog(false);
+                setNewExpense(defaultExpense);
             }
-            handleCloseDialog();
         } catch (error) {
             console.error('Error creating expense:', error);
             showSnackbar('Error creating expense', 'error');
@@ -140,7 +202,16 @@ export function ExpenseTable() {
                     </TableHead>
                     <TableBody>
                         {expenses.map((expense) => (
-                            <TableRow key={expense.id}>
+                            <TableRow
+                                key={expense.id}
+                                onClick={() => handleEditOnClick(expense)}
+                                sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                    }
+                                }}
+                            >
                                 <TableCell>
                                     <Chip label={expense.category} />
                                 </TableCell>
@@ -152,10 +223,10 @@ export function ExpenseTable() {
                                 <TableCell>{expense.description}</TableCell>
                                 <TableCell>{expense.createTime}</TableCell>
                                 <TableCell>
-                                    <IconButton>
+                                    <IconButton onClick={() => handleEditOnClick(expense)}>
                                         <Edit color='primary' />
                                     </IconButton>
-                                    <IconButton>
+                                    <IconButton onClick={() => handleDeleteOnClick(expense.id)}>
                                         <Delete color='error' />
                                     </IconButton>
                                 </TableCell>
@@ -165,9 +236,11 @@ export function ExpenseTable() {
                 </Table>
             </TableContainer>
 
-            {/* Dialog for adding new expense */}
+            {/* Dialog for adding/editing new expense */}
             <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth>
-                <DialogTitle>Add New Expense</DialogTitle>
+                <DialogTitle>
+                    {editMode ? 'Edit Expense' : 'Add New Expense'}
+                </DialogTitle>
                 <DialogContent>
                     <TextField
                         margin="dense"
@@ -176,12 +249,14 @@ export function ExpenseTable() {
                         fullWidth
                         value={newExpense.name}
                         onChange={handleInputChange}
+                        required
                     />
                     <FormControl fullWidth margin="dense">
                         <InputLabel>Category</InputLabel>
                         <Select
                             name="category"
                             value={newExpense.category}
+                            onChange={handleSelectChange}
                         >
                             <MenuItem value="Food">Food</MenuItem>
                             <MenuItem value="Transport">Transport</MenuItem>
@@ -195,6 +270,7 @@ export function ExpenseTable() {
                         <Select
                             name="currency"
                             value={newExpense.currency}
+                            onChange={handleSelectChange}
                         >
                             <MenuItem value="AUD">AUD</MenuItem>
                             <MenuItem value="USD">USD</MenuItem>
@@ -208,6 +284,7 @@ export function ExpenseTable() {
                         fullWidth
                         value={newExpense.amount}
                         onChange={handleInputChange}
+                        required
                     />
                     <TextField
                         margin="dense"
@@ -218,12 +295,27 @@ export function ExpenseTable() {
                         rows={3}
                         value={newExpense.description}
                         onChange={handleInputChange}
+                        required
                     />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseDialog}>Cancel</Button>
-                    <Button onClick={handleSubmitNewExpense} variant="contained" color="primary">
+                    <Button onClick={handleSubmitExpense} variant="contained" color="primary">
                         Save
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog for confirming delete */}
+            <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    Are you sure you want to delete this expense?
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenConfirm(false)}>Cancel</Button>
+                    <Button onClick={() => handleDelete(selectedId)} variant="contained" color="error">
+                        Delete
                     </Button>
                 </DialogActions>
             </Dialog>
