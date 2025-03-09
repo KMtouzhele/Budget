@@ -21,81 +21,67 @@ import {
     DialogContent,
     DialogActions,
     Dialog,
-    DialogTitle
+    DialogTitle,
+    Snackbar,
+    Alert,
+    IconButton,
 } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import { ExpenseModel } from '@/models/ExpenseModel';
+import { getExpenses } from '@/api/expense';
+import { Delete, Edit } from '@mui/icons-material';
 
-interface Expense {
-    id: number;
-    createTime: string;
-    category: string;
-    name: string;
-    amount: number;
-    currency: string;
-    description: string;
-    userId: string;
-}
 
 export function ExpenseTable() {
-    const router = useRouter();
-    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [expenses, setExpenses] = useState<ExpenseModel[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
     const [openDialog, setOpenDialog] = useState(false);
-    const [newExpense, setNewExpense] = useState({
+    const [newExpense, setNewExpense] = useState<ExpenseModel>({} as ExpenseModel);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
+    const defaultExpense: ExpenseModel = {
+        id: 0,
         name: '',
-        category: 'Food', // 默认类别
+        category: 'Transport',
         amount: 0,
         currency: 'AUD',
-        description: ''
-    });
+        description: '',
+        createTime: ''
+    };
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            router.push('/auth/login');
-            return;
-        }
-
-        const fetchExpenses = async () => {
-            try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/expense/`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-                console.log('API response:', response.data);
-                if (response.status === 401) {
-                    console.error(`${response.data.title}, ${response.data.message}`);
-                    router.push('/auth/login');
-                    return;
-                }
-                if (response.data && response.data.message && response.data.message.expenses) {
-                    setExpenses(response.data.message.expenses);
-                } else {
-                    console.error('Unexpected response structure:', response.data);
-                    setExpenses([]);
-                }
-            } catch (error) {
-                console.error('Error fetching expenses', error);
-            }
-        };
-
         fetchExpenses();
     }, []);
 
-    const handleNewExpense = () => {
+    const fetchExpenses = async () => {
+        try {
+            setLoading(true);
+            const expenses = await getExpenses();
+            setExpenses(expenses);
+        } catch (error) {
+            console.error('Error fetching expenses', error);
+        } finally {
+            setLoading(false);
+            console.log('======= Expenses:', expenses);
+        }
+    };
+
+    const showSnackbar = (message: string, severity: 'success' | 'error') => {
+        setSnackbarMessage(message);
+        setSnackbarSeverity(severity);
+        setSnackbarOpen(true);
+    };
+
+    const handleNewOnClick = () => {
         console.log('New Expense');
+        setNewExpense(defaultExpense);
         setOpenDialog(true);
     };
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
-        setNewExpense({
-            name: '',
-            category: 'Food',
-            amount: 0,
-            currency: 'AUD',
-            description: ''
-        });
+        setNewExpense({} as ExpenseModel);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
@@ -120,11 +106,13 @@ export function ExpenseTable() {
             );
 
             if (response.data && response.data.message && response.data.message.expense) {
-                setExpenses([response.data.message.expense, ...expenses]);
+                fetchExpenses();
+                showSnackbar('Expense created successfully', 'success');
             }
             handleCloseDialog();
         } catch (error) {
             console.error('Error creating expense:', error);
+            showSnackbar('Error creating expense', 'error');
         }
     };
 
@@ -134,7 +122,7 @@ export function ExpenseTable() {
             <Typography variant="h4" component="h1" mb={3}>
                 Expenses
             </Typography>
-            <Button variant='contained' onClick={handleNewExpense}>
+            <Button variant='contained' onClick={handleNewOnClick}>
                 New Expense
             </Button>
             <TableContainer component={Paper}>
@@ -147,6 +135,7 @@ export function ExpenseTable() {
                             <TableCell>Currency</TableCell>
                             <TableCell>Description</TableCell>
                             <TableCell>Created</TableCell>
+                            <TableCell>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -162,12 +151,21 @@ export function ExpenseTable() {
                                 </TableCell>
                                 <TableCell>{expense.description}</TableCell>
                                 <TableCell>{expense.createTime}</TableCell>
+                                <TableCell>
+                                    <IconButton>
+                                        <Edit color='primary' />
+                                    </IconButton>
+                                    <IconButton>
+                                        <Delete color='error' />
+                                    </IconButton>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </TableContainer>
 
+            {/* Dialog for adding new expense */}
             <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth>
                 <DialogTitle>Add New Expense</DialogTitle>
                 <DialogContent>
@@ -190,6 +188,16 @@ export function ExpenseTable() {
                             <MenuItem value="Bills">Bills</MenuItem>
                             <MenuItem value="Entertainment">Entertainment</MenuItem>
                             <MenuItem value="Other">Other</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth margin="dense">
+                        <InputLabel>Currency</InputLabel>
+                        <Select
+                            name="currency"
+                            value={newExpense.currency}
+                        >
+                            <MenuItem value="AUD">AUD</MenuItem>
+                            <MenuItem value="USD">USD</MenuItem>
                         </Select>
                     </FormControl>
                     <TextField
@@ -219,6 +227,27 @@ export function ExpenseTable() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Snackbar for prompting err and result */}
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={3000}
+                onClose={() => setSnackbarOpen(false)}
+            >
+                <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
+
+            {/* Loading */}
+            {<Snackbar
+                open={loading}
+            >
+                <Alert>
+                    Loading...
+                </Alert>
+            </Snackbar>}
+
         </Box>
     );
 }
