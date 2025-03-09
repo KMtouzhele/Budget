@@ -16,17 +16,19 @@ import {
   Typography
 } from '@mui/material';
 import { 
-  BarChart as AnalyticsIcon, 
-  Receipt as ExpensesIcon,
-  Menu as MenuIcon,
-  Dashboard as DashboardIcon
+  Receipt,
+  Menu,
+  Dashboard,
+  Settings,
+  BarChart
 } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
 
 const navItems = [
-  { text: 'Overview', path: '/budget/overview', icon: <DashboardIcon /> },
-  { text: 'Analytics', path: '/budget/analytics', icon: <AnalyticsIcon /> },
-  { text: 'Expenses', path: '/budget/expenses', icon: <ExpensesIcon /> }
+  { text: 'Overview', path: '/budget/overview', icon: <Dashboard /> },
+  { text: 'Analytics', path: '/budget/analytics', icon: <BarChart /> },
+  { text: 'Expenses', path: '/budget/expenses', icon: <Receipt /> },
+  {text: 'Settings', path: '/budget/settings', icon: <Settings />}
 ];
 
 const drawerWidth = 240;
@@ -96,7 +98,7 @@ export default function SideNav({ children }: { children: React.ReactNode }) {
           onClick={handleDrawerToggle}
           sx={{ mr: 2, position: 'absolute', top: 8, left: 8, zIndex: 1100 }}
         >
-          <MenuIcon />
+          <Menu />
         </IconButton>
       )}
 
