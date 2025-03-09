@@ -25,6 +25,10 @@ import {
     Alert,
     IconButton,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { ExpenseModel } from '@/models/ExpenseModel';
 import { getExpenses, deleteExpense, updateExpense, createExpense } from '@/api/expense';
@@ -50,7 +54,8 @@ export function ExpenseTable() {
         amount: 0,
         currency: 'AUD',
         description: '',
-        createTime: ''
+        createTime: '',
+        date: dayjs(),
     };
 
     useEffect(() => {
@@ -87,10 +92,14 @@ export function ExpenseTable() {
         setEditMode(true);
         setSelectedId(expenseModel.id);
         setOpenDialog(true);
-        setNewExpense(expenseModel);
+        setNewExpense({
+            ...expenseModel,
+            date: dayjs(expenseModel.date)
+        });
     };
 
-    const handleDeleteOnClick = (id: number) => {
+    const handleDeleteOnClick = (id: number, event: React.MouseEvent) => {
+        event.stopPropagation();
         setSelectedId(id);
         setOpenConfirm(true);
     };
@@ -132,8 +141,7 @@ export function ExpenseTable() {
 
     const formValid = () => {
         return newExpense.name.length > 0
-            && newExpense.amount > 0
-            && newExpense.description.length > 0;
+            && newExpense.amount > 0;
     };
 
     const handleSelectChange = (e: SelectChangeEvent) => {
@@ -180,166 +188,177 @@ export function ExpenseTable() {
 
 
     return (
-        <Box>
-            <Typography variant="h4" component="h1" mb={3}>
-                Expenses
-            </Typography>
-            <Button variant='contained' onClick={handleNewOnClick}>
-                New Expense
-            </Button>
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Category</TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Amount</TableCell>
-                            <TableCell>Currency</TableCell>
-                            <TableCell>Description</TableCell>
-                            <TableCell>Created</TableCell>
-                            <TableCell>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {expenses.map((expense) => (
-                            <TableRow
-                                key={expense.id}
-                                onClick={() => handleEditOnClick(expense)}
-                                sx={{
-                                    cursor: 'pointer',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                                    }
-                                }}
-                            >
-                                <TableCell>
-                                    <Chip label={expense.category} />
-                                </TableCell>
-                                <TableCell>{expense.name}</TableCell>
-                                <TableCell>{expense.amount}</TableCell>
-                                <TableCell>
-                                    <Chip label={expense.currency} />
-                                </TableCell>
-                                <TableCell>{expense.description}</TableCell>
-                                <TableCell>{expense.createTime}</TableCell>
-                                <TableCell>
-                                    <IconButton onClick={() => handleEditOnClick(expense)}>
-                                        <Edit color='primary' />
-                                    </IconButton>
-                                    <IconButton onClick={() => handleDeleteOnClick(expense.id)}>
-                                        <Delete color='error' />
-                                    </IconButton>
-                                </TableCell>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box>
+                <Typography variant="h4" component="h1" mb={3}>
+                    Expenses
+                </Typography>
+                <Button variant='contained' onClick={handleNewOnClick}>
+                    New Expense
+                </Button>
+                <TableContainer component={Paper}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Date</TableCell>
+                                <TableCell>Category</TableCell>
+                                <TableCell>Name</TableCell>
+                                <TableCell>Amount</TableCell>
+                                <TableCell>Currency</TableCell>
+                                <TableCell>Description</TableCell>
+                                <TableCell>Actions</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                            {expenses.map((expense) => (
+                                <TableRow
+                                    key={expense.id}
+                                    onClick={() => handleEditOnClick(expense)}
+                                    sx={{
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                        }
+                                    }}
+                                >
+                                    <TableCell>
+                                        {dayjs(expense.date).format('MMM D, YYYY')}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip label={expense.category} />
+                                    </TableCell>
+                                    <TableCell>{expense.name}</TableCell>
+                                    <TableCell>{expense.amount}</TableCell>
+                                    <TableCell>
+                                        <Chip label={expense.currency} />
+                                    </TableCell>
+                                    <TableCell>{expense.description}</TableCell>
+                                    <TableCell>
+                                        <IconButton onClick={() => handleEditOnClick(expense)}>
+                                            <Edit color='primary' />
+                                        </IconButton>
+                                        <IconButton onClick={(event) => handleDeleteOnClick(expense.id, event)}>
+                                            <Delete color='error' />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
 
-            {/* Dialog for adding/editing new expense */}
-            <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth>
-                <DialogTitle>
-                    {editMode ? 'Edit Expense' : 'Add New Expense'}
-                </DialogTitle>
-                <DialogContent>
-                    <TextField
-                        margin="dense"
-                        name="name"
-                        label="Name"
-                        fullWidth
-                        value={newExpense.name}
-                        onChange={handleInputChange}
-                        required
-                    />
-                    <FormControl fullWidth margin="dense">
-                        <InputLabel>Category</InputLabel>
-                        <Select
-                            name="category"
-                            value={newExpense.category}
-                            onChange={handleSelectChange}
-                        >
-                            <MenuItem value="Food">Food</MenuItem>
-                            <MenuItem value="Transport">Transport</MenuItem>
-                            <MenuItem value="Bills">Bills</MenuItem>
-                            <MenuItem value="Entertainment">Entertainment</MenuItem>
-                            <MenuItem value="Other">Other</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth margin="dense">
-                        <InputLabel>Currency</InputLabel>
-                        <Select
-                            name="currency"
-                            value={newExpense.currency}
-                            onChange={handleSelectChange}
-                        >
-                            <MenuItem value="AUD">AUD</MenuItem>
-                            <MenuItem value="USD">USD</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <TextField
-                        margin="dense"
-                        name="amount"
-                        label="Amount"
-                        type="number"
-                        fullWidth
-                        value={newExpense.amount}
-                        onChange={handleInputChange}
-                        required
-                    />
-                    <TextField
-                        margin="dense"
-                        name="description"
-                        label="Description"
-                        fullWidth
-                        multiline
-                        rows={3}
-                        value={newExpense.description}
-                        onChange={handleInputChange}
-                        required
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
-                    <Button onClick={handleSubmitExpense} variant="contained" color="primary">
-                        Save
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                {/* Dialog for adding/editing new expense */}
+                <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth>
+                    <DialogTitle>
+                        {editMode ? 'Edit Expense' : 'Add New Expense'}
+                    </DialogTitle>
+                    <DialogContent>
+                        <DatePicker
+                            label="Date"
+                            value={newExpense.date}
+                            onChange={(date) => setNewExpense(prev => ({ ...prev, date: date || dayjs() }))}
+                            slotProps={{ textField: { fullWidth: true, margin: "dense" } }}
+                        />
 
-            {/* Dialog for confirming delete */}
-            <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
-                <DialogTitle>Confirm Delete</DialogTitle>
-                <DialogContent>
-                    Are you sure you want to delete this expense?
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenConfirm(false)}>Cancel</Button>
-                    <Button onClick={() => handleDelete(selectedId)} variant="contained" color="error">
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                        <TextField
+                            margin="dense"
+                            name="name"
+                            label="Name"
+                            fullWidth
+                            value={newExpense.name}
+                            onChange={handleInputChange}
+                            required
+                        />
+                        <FormControl fullWidth margin="dense">
+                            <InputLabel>Category</InputLabel>
+                            <Select
+                                name="category"
+                                value={newExpense.category}
+                                onChange={handleSelectChange}
+                            >
+                                <MenuItem value="Food">Food</MenuItem>
+                                <MenuItem value="Transport">Transport</MenuItem>
+                                <MenuItem value="Bills">Bills</MenuItem>
+                                <MenuItem value="Entertainment">Entertainment</MenuItem>
+                                <MenuItem value="Other">Other</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl fullWidth margin="dense">
+                            <InputLabel>Currency</InputLabel>
+                            <Select
+                                name="currency"
+                                value={newExpense.currency}
+                                onChange={handleSelectChange}
+                            >
+                                <MenuItem value="AUD">AUD</MenuItem>
+                                <MenuItem value="USD">USD</MenuItem>
+                                <MenuItem value="CNY">CNY</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            margin="dense"
+                            name="amount"
+                            label="Amount"
+                            type="number"
+                            fullWidth
+                            value={newExpense.amount}
+                            onChange={handleInputChange}
+                            required
+                        />
+                        <TextField
+                            margin="dense"
+                            name="description"
+                            label="Description"
+                            fullWidth
+                            multiline
+                            rows={3}
+                            value={newExpense.description}
+                            onChange={handleInputChange}
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseDialog}>Cancel</Button>
+                        <Button onClick={handleSubmitExpense} variant="contained" color="primary">
+                            Save
+                        </Button>
+                    </DialogActions>
+                </Dialog>
 
-            {/* Snackbar for prompting err and result */}
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={3000}
-                onClose={() => setSnackbarOpen(false)}
-            >
-                <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity}>
-                    {snackbarMessage}
-                </Alert>
-            </Snackbar>
+                {/* Dialog for confirming delete */}
+                <Dialog open={openConfirm} onClose={() => setOpenConfirm(false)}>
+                    <DialogTitle>Confirm Delete</DialogTitle>
+                    <DialogContent>
+                        Are you sure you want to delete this expense?
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setOpenConfirm(false)}>Cancel</Button>
+                        <Button onClick={() => handleDelete(selectedId)} variant="contained" color="error">
+                            Delete
+                        </Button>
+                    </DialogActions>
+                </Dialog>
 
-            {/* Loading */}
-            {<Snackbar
-                open={loading}
-            >
-                <Alert>
-                    Loading...
-                </Alert>
-            </Snackbar>}
+                {/* Snackbar for prompting err and result */}
+                <Snackbar
+                    open={snackbarOpen}
+                    autoHideDuration={3000}
+                    onClose={() => setSnackbarOpen(false)}
+                >
+                    <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity}>
+                        {snackbarMessage}
+                    </Alert>
+                </Snackbar>
 
-        </Box>
+                {/* Loading */}
+                {<Snackbar
+                    open={loading}
+                >
+                    <Alert>
+                        Loading...
+                    </Alert>
+                </Snackbar>}
+
+            </Box>
+        </LocalizationProvider>
     );
 }
