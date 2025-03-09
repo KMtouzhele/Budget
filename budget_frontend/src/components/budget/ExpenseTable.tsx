@@ -196,6 +196,7 @@ export function ExpenseTable() {
                 <Button variant='contained' onClick={handleNewOnClick}>
                     New Expense
                 </Button>
+                <Box mb={3} />
                 <TableContainer component={Paper}>
                     <Table>
                         <TableHead>
@@ -203,9 +204,8 @@ export function ExpenseTable() {
                                 <TableCell>Date</TableCell>
                                 <TableCell>Category</TableCell>
                                 <TableCell>Name</TableCell>
-                                <TableCell>Amount</TableCell>
                                 <TableCell>Currency</TableCell>
-                                <TableCell>Description</TableCell>
+                                <TableCell>Amount</TableCell>
                                 <TableCell>Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -228,11 +228,14 @@ export function ExpenseTable() {
                                         <Chip label={expense.category} />
                                     </TableCell>
                                     <TableCell>{expense.name}</TableCell>
-                                    <TableCell>{expense.amount}</TableCell>
                                     <TableCell>
                                         <Chip label={expense.currency} />
                                     </TableCell>
-                                    <TableCell>{expense.description}</TableCell>
+                                    <TableCell>
+                                        <Typography variant="h6" component="h1" color='primary' fontWeight='bold' fontFamily={'Monospace'}>
+                                            {expense.amount.toFixed(2).toString()}
+                                        </Typography>
+                                    </TableCell>
                                     <TableCell>
                                         <IconButton onClick={() => handleEditOnClick(expense)}>
                                             <Edit color='primary' />
@@ -278,7 +281,7 @@ export function ExpenseTable() {
                             >
                                 <MenuItem value="Food">Food</MenuItem>
                                 <MenuItem value="Transport">Transport</MenuItem>
-                                <MenuItem value="Bills">Bills</MenuItem>
+                                <MenuItem value="Utilities">Utilities</MenuItem>
                                 <MenuItem value="Entertainment">Entertainment</MenuItem>
                                 <MenuItem value="Other">Other</MenuItem>
                             </Select>
