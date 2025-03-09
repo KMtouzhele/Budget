@@ -30,7 +30,10 @@ namespace Budget.DB.Models
         public string Currency { get; set; } = "AUD";
 
         [Column("Description")]
-        public string Description { get; set; } = "";
+        public string? Description { get; set; }
+
+        [Column("Date")]
+        public DateTime Date { get; set; }
 
         [Column("UserId")]
         public required string UserId { get; set; }

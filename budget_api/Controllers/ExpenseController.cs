@@ -107,6 +107,7 @@ namespace Budget.Controllers
                 Description = model.Description,
                 Amount = model.Amount,
                 Currency = model.Currency,
+                Date = model.Date,
                 UserId = userId,
                 CreateTime = DateTime.UtcNow
             };
@@ -186,6 +187,7 @@ namespace Budget.Controllers
             expense.Description = model.Description;
             expense.Amount = model.Amount;
             expense.Currency = model.Currency;
+            expense.Date = model.Date;
 
             await _context.SaveChangesAsync();
 

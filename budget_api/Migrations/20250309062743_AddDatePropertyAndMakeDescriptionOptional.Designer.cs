@@ -3,6 +3,7 @@ using System;
 using Budget.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace budget_api.Migrations
 {
     [DbContext(typeof(BudgetDBContext))]
-    partial class BudgetDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250309062743_AddDatePropertyAndMakeDescriptionOptional")]
+    partial class AddDatePropertyAndMakeDescriptionOptional
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -114,11 +117,8 @@ namespace budget_api.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("Currency");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("Date");
-
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("Description");
 
