@@ -13,6 +13,8 @@ namespace Budget.DB
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Currency> Currencies { get; set; }
+        public required DbSet<AspNetUser> AspNetUsers { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

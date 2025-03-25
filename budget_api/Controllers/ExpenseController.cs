@@ -4,7 +4,6 @@ using Budget.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace Budget.Controllers
@@ -24,7 +23,7 @@ namespace Budget.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
+        public async Task<IActionResult> GetExpenses()
         {
             _logger.LogInformation("Getting expenses for user");
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
