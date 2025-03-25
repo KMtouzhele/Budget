@@ -36,9 +36,6 @@ namespace Budget.DB.Models
 
         [ForeignKey("CurrencyId")]
         public required Currency Currency { get; set; }
-
-        [ForeignKey("UserId")]
-        public required AspNetUser User { get; set; }
     }
 
     public enum AccountType
