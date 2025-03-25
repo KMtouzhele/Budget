@@ -3,6 +3,7 @@ using System;
 using Budget.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace budget_api.Migrations
 {
     [DbContext(typeof(BudgetDBContext))]
-    partial class BudgetDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250325134811_makeUserNullableInExpense")]
+    partial class makeUserNullableInExpense
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,6 +69,9 @@ namespace budget_api.Migrations
                         .HasColumnType("text")
                         .HasColumnName("UserId");
 
+                    b.Property<string>("UserId1")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CurrencyId");
@@ -73,6 +79,8 @@ namespace budget_api.Migrations
                     b.HasIndex("CurrencyId1");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId1");
 
                     b.ToTable("Accounts");
                 });
@@ -379,7 +387,13 @@ namespace budget_api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Budget.DB.Models.AspNetUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId1");
+
                     b.Navigation("Currency");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Budget.DB.Models.Expense", b =>
