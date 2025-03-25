@@ -25,17 +25,23 @@ namespace Budget.DB.Models
         [Precision(10, 2)]
         public decimal Amount { get; set; }
 
-        [Column("Currency")]
-        [StringLength(3)]
-        public string Currency { get; set; } = "AUD";
-
         [Column("Description")]
         public string? Description { get; set; }
 
         [Column("Date")]
         public DateTime Date { get; set; }
 
-        [Column("UserId")]
-        public required string UserId { get; set; }
+        [Column("IsRecurring")]
+        public bool IsRecurring { get; set; }
+
+        [Column("Type")]
+        [EnumDataType(typeof(ExpenseType))]
+        public string Type { get; set; } = ExpenseType.Expense.ToString();
+
+        [Column("AccountId")]
+        public required int AccountId { get; set; }
+
+        [ForeignKey("AccountId")]
+        public required Account Account { get; set; }
     }
 }

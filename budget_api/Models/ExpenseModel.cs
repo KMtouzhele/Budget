@@ -12,7 +12,7 @@ namespace Budget.Models
         [Required]
         public required decimal Amount { get; set; }
         [Required]
-        public required string Currency { get; set; }
+        public required int AccountId { get; set; }
 
         [Required]
         public required DateTime Date { get; set; }

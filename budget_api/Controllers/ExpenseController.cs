@@ -43,9 +43,10 @@ namespace Budget.Controllers
             _logger.LogInformation("UserID found: {UserId}", userId);
 
             var expenses = await _context.Expenses
-                .Where(e => e.UserId == userId)
-                .OrderByDescending(e => e.CreateTime)
-                .ToListAsync();
+            .Include(e => e.Account)
+            .Where(e => e.Account.UserId == userId)
+            .OrderByDescending(e => e.CreateTime)
+            .ToListAsync();
 
             if (expenses == null || expenses.Count == 0)
             {
@@ -99,6 +100,18 @@ namespace Budget.Controllers
                 }
                 );
             }
+            var account = await _context.Accounts.FindAsync(model.AccountId);
+            if (account == null)
+            {
+                return NotFound(
+                    new
+                    {
+                        status = 404,
+                        title = "Account not found",
+                        message = "Account not found"
+                    }
+                );
+            }
 
             Expense expense = new()
             {
@@ -106,9 +119,9 @@ namespace Budget.Controllers
                 Category = model.Category,
                 Description = model.Description,
                 Amount = model.Amount,
-                Currency = model.Currency,
+                AccountId = model.AccountId,
+                Account = account,
                 Date = model.Date,
-                UserId = userId,
                 CreateTime = DateTime.UtcNow
             };
 
@@ -157,7 +170,7 @@ namespace Budget.Controllers
                 );
             }
 
-            if (expense.UserId != userId)
+            if (expense.Account.UserId != userId)
             {
                 return Unauthorized(
                     new
@@ -186,7 +199,7 @@ namespace Budget.Controllers
             expense.Category = model.Category;
             expense.Description = model.Description;
             expense.Amount = model.Amount;
-            expense.Currency = model.Currency;
+            expense.AccountId = model.AccountId;
             expense.Date = model.Date;
 
             await _context.SaveChangesAsync();
@@ -233,7 +246,7 @@ namespace Budget.Controllers
                 );
             }
 
-            if (expense.UserId != userId)
+            if (expense.Account.UserId != userId)
             {
                 return Unauthorized(
                     new
